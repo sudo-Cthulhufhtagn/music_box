@@ -164,6 +164,7 @@ include_directories(
    scripts/bot.py
    scripts/first_words.py
    scripts/bot_demo.py
+   scripts/speed_sniffer.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

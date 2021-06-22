@@ -49,6 +49,8 @@ if __name__ == '__main__':
     soundhandle = SoundClient()
     global cmd_vel_pub
     cmd_vel_pub = rospy.Publisher('cmd_vel', Twist, queue_size=1)
+    global last_heartbeat
+	last_heartbeat = rospy.get_time()
     t = rospy.Timer(rospy.Duration(0.1), timer_callback)
     rospy.sleep(1)
 
@@ -56,6 +58,9 @@ if __name__ == '__main__':
     global rospack
     rospack = rospkg.RosPack()
     to_files=rospack.get_path('music_box')
+
+    global last_heartbeat
+	last_heartbeat = rospy.get_time()
 
     rospy.loginfo('Attempt 1')
     soundhandle.playWave(to_files + "/audio/Rolling_out.ogg")

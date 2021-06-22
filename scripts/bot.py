@@ -18,6 +18,7 @@ def send_welcome(message):
 @bot.message_handler(content_types=['text'])
 def get_text_messages(message):
     # global rospack
+    
     if message.text.lower() == 'привет':
         bot.send_message(message.from_user.id, 'Привет!')
     elif message.text.lower() == 'cl':
@@ -26,6 +27,12 @@ def get_text_messages(message):
     elif message.text.lower() == 'mv':
         soundhandle.playWave(to_files + "/audio/Moving.ogg")
         sleep(2)
+    elif message.text.lower() == 'f':
+        soundhandle.playWave(to_files + "/audio/Engaging.ogg")
+        sleep(2)
+        twist_msg = Twist()
+        twist_msg.linerar.x=1
+        cmd_vel_pub.publish(twist_msg)
     else:
         bot.send_message(message.from_user.id, 'Не понимаю, что это значит.')
         soundhandle.playWave(to_files + "/audio/Area_denied.ogg")
@@ -34,7 +41,9 @@ def get_text_messages(message):
 if __name__ == '__main__':
     rospy.init_node('telegram_bot', anonymous = True)
     soundhandle = SoundClient()
-
+    global cmd_vel_pub
+	cmd_vel_pub = rospy.Publisher('cmd_vel', Twist, queue_size=1)
+    t = rospy.Timer(rospy.Duration(0.1), timer_callback)
     rospy.sleep(1)
 
     soundhandle.stopAll()

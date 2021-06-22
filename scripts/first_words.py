@@ -57,10 +57,7 @@ if __name__ == '__main__':
     
     rospack = rospkg.RosPack()
     to_files=rospack.get_path('music_box')
-
+    sleep(10)
     rospy.loginfo('Attempt 1')
     soundhandle.playWave(to_files + "/audio/System_initialized.ogg")
-    sleep(10)
-    rospy.loginfo('Attempt 2')
-    soundhandle.playWave(to_files + "/audio/Systems_operating_at_maximum.ogg")
     sleep(2)

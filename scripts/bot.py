@@ -2,6 +2,7 @@
 import rospy, os, sys, rospkg, telebot, signal
 from sound_play.msg import SoundRequest
 from geometry_msgs.msg import Twist
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup
 bot = telebot.TeleBot('1763023661:AAHtQBxpg0QGWIN-a4G67IhRY9Yx5intVz8')
 
 from sound_play.libsoundplay import SoundClient
@@ -11,6 +12,84 @@ def sleep(t):
         rospy.sleep(t)
     except:
         pass
+
+def gen_markup():
+    markup = ReplyKeyboardMarkup()
+    markup.row_width = 3
+    markup.add(InlineKeyboardButton("↖️", callback_data="tl"),
+    InlineKeyboardButton("⬆️", callback_data="tt"),
+    InlineKeyboardButton("↗️", callback_data="tr"),row_width=3)
+    markup.add(InlineKeyboardButton("⬅️", callback_data="cl"),
+    InlineKeyboardButton("⏹", callback_data="cc"),
+    InlineKeyboardButton("➡️", callback_data="cr"))
+    markup.add(InlineKeyboardButton("↙️", callback_data="bl"),
+    InlineKeyboardButton("⬇️", callback_data="bb"),
+    InlineKeyboardButton("↘️", callback_data="br"))
+    return markup
+
+def gen_markup2():
+    markup = ReplyKeyboardMarkup()
+    markup.row_width = 3
+    markup.add(InlineKeyboardButton("↪️"),
+    InlineKeyboardButton("⏺"),
+    InlineKeyboardButton("↩️"))
+    return markup
+
+def gen_markup1():
+    markup = InlineKeyboardMarkup()
+    markup.row_width = 3
+    markup.add(InlineKeyboardButton("↖️", callback_data="tl"),
+    InlineKeyboardButton("⬆️", callback_data="tt"),
+    InlineKeyboardButton("↗️", callback_data="tr"),row_width=3)
+    markup.add(InlineKeyboardButton("⬅️", callback_data="cl"),
+    InlineKeyboardButton("⏹", callback_data="cc"),
+    InlineKeyboardButton("➡️", callback_data="cr"))
+    markup.add(InlineKeyboardButton("↙️", callback_data="bl"),
+    InlineKeyboardButton("⬇️", callback_data="bb"),
+    InlineKeyboardButton("↘️", callback_data="br"))
+    return markup
+
+@bot.callback_query_handler(func=lambda call: True)
+def callback_query(call):
+    twist_msg = Twist()
+    # global cmd_vel_pub
+    if call.data == "tl":
+        twist_msg.linear.x=1
+        twist_msg.linear.y=1
+        cmd_vel_pub.publish(twist_msg)
+        # bot.answer_callback_query(call.id, "tl")
+    elif call.data == "tt":
+        twist_msg.linear.x=1
+        twist_msg.linear.y=0
+        cmd_vel_pub.publish(twist_msg)
+        # bot.answer_callback_query(call.id, "tt")
+    elif call.data == "tr":
+        twist_msg.linear.x=1
+        twist_msg.linear.y=-1
+        cmd_vel_pub.publish(twist_msg)
+    elif call.data == "cl":
+        twist_msg.linear.y=1
+        cmd_vel_pub.publish(twist_msg)
+    elif call.data == "cc":
+        twist_msg.linear.y=0
+        twist_msg.linear.x=0
+        cmd_vel_pub.publish(twist_msg)
+    elif call.data == "cr":
+        twist_msg.linear.y=-1
+        twist_msg.linear.x=0
+        cmd_vel_pub.publish(twist_msg)
+    elif call.data == "bl":
+        twist_msg.linear.y=1
+        twist_msg.linear.x=-1
+        cmd_vel_pub.publish(twist_msg)
+    elif call.data == "bb":
+        twist_msg.linear.y=0
+        twist_msg.linear.x=-1
+        cmd_vel_pub.publish(twist_msg)
+    elif call.data == "br":
+        twist_msg.linear.y=-1
+        twist_msg.linear.x=-1
+        cmd_vel_pub.publish(twist_msg)
 
 @bot.message_handler(commands=['start', 'help'])
 def send_welcome(message):
@@ -23,8 +102,7 @@ def timer_callback(event):
 
 @bot.message_handler(content_types=['text'])
 def get_text_messages(message):
-    # global rospack
-    
+    twist_msg = Twist()
     if message.text.lower() == 'привет':
         bot.send_message(message.from_user.id, 'Привет!')
     elif message.text.lower() == 'cl':
@@ -40,6 +118,70 @@ def get_text_messages(message):
         soundhandle.playWave(to_files + "/audio/Engaging.ogg")
         twist_msg = Twist()
         twist_msg.linear.x=1
+        cmd_vel_pub.publish(twist_msg)
+    elif message.text.lower() == '/keyboard' or message.text == '⏺':
+        bot.delete_message(message.chat.id, message.message_id)
+        bot.send_message(message.chat.id, "Robot control", reply_markup=gen_markup())
+    elif message.text.lower() == '/keyboard_1':
+        bot.send_message(message.chat.id, "Robot control", reply_markup=gen_markup1())
+    elif message.text.lower() == 'd':
+        keyboard = telebot.types.ReplyKeyboardMarkup(True)
+        keyboard.row('Привет', 'Пока')
+        # bot.send_message(message.chat.id, 'Привет!', reply_markup=keyboard)
+    elif message.text.lower() == '↖️':
+        bot.delete_message(message.chat.id, message.message_id)
+        twist_msg.linear.x=1
+        twist_msg.linear.y=1
+        cmd_vel_pub.publish(twist_msg)
+        # bot.answer_callback_query(call.id, "tl")
+    elif message.text.lower() ==  "⬆️":
+        bot.delete_message(message.chat.id, message.message_id)
+        twist_msg.linear.x=1
+        twist_msg.linear.y=0
+        cmd_vel_pub.publish(twist_msg)
+        # bot.answer_callback_query(call.id, "tt") ↖️
+    elif message.text.lower() ==  "↗️":
+        bot.delete_message(message.chat.id, message.message_id)
+        twist_msg.linear.x=1
+        twist_msg.linear.y=-1
+        cmd_vel_pub.publish(twist_msg)
+    elif message.text.lower() ==  "⬅️":
+        bot.delete_message(message.chat.id, message.message_id)
+        twist_msg.linear.y=1
+        cmd_vel_pub.publish(twist_msg)
+    elif message.text.lower() ==  "⏹": 
+        bot.delete_message(message.chat.id, message.message_id)
+        bot.send_message(message.chat.id, "Turn left/right", reply_markup=gen_markup2())
+        twist_msg.linear.y=0
+        twist_msg.linear.x=0
+        cmd_vel_pub.publish(twist_msg)
+    elif message.text.lower() ==  "➡️":
+        bot.delete_message(message.chat.id, message.message_id)
+        twist_msg.linear.y=-1
+        twist_msg.linear.x=0
+        cmd_vel_pub.publish(twist_msg)
+    elif message.text.lower() ==  "↙️":
+        bot.delete_message(message.chat.id, message.message_id)
+        twist_msg.linear.y=1
+        twist_msg.linear.x=-1
+        cmd_vel_pub.publish(twist_msg)
+    elif message.text.lower() == "⬇️":
+        bot.delete_message(message.chat.id, message.message_id)
+        twist_msg.linear.y=0
+        twist_msg.linear.x=-1
+        cmd_vel_pub.publish(twist_msg)
+    elif message.text.lower() == "↘️":
+        bot.delete_message(message.chat.id, message.message_id)
+        twist_msg.linear.y=-1
+        twist_msg.linear.x=-1
+        cmd_vel_pub.publish(twist_msg)
+    elif message.text.lower() == "↪️":
+        bot.delete_message(message.chat.id, message.message_id)
+        twist_msg.angular.z=1
+        cmd_vel_pub.publish(twist_msg)
+    elif message.text.lower() == "↩️":
+        bot.delete_message(message.chat.id, message.message_id)
+        twist_msg.angular.z=-1
         cmd_vel_pub.publish(twist_msg)
     else:
         bot.send_message(message.from_user.id, 'Не понимаю, что это значит.')

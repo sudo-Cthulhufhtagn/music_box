@@ -1,45 +1,12 @@
-#!/usr/bin/env python
-
-#***********************************************************
-#* Software License Agreement (BSD License)
-#*
-#*  Copyright (c) 2009, Willow Garage, Inc.
-#*  All rights reserved.
-#*
-#*  Redistribution and use in source and binary forms, with or without
-#*  modification, are permitted provided that the following conditions
-#*  are met:
-#*
-#*   * Redistributions of source code must retain the above copyright
-#*     notice, this list of conditions and the following disclaimer.
-#*   * Redistributions in binary form must reproduce the above
-#*     copyright notice, this list of conditions and the following
-#*     disclaimer in the documentation and/or other materials provided
-#*     with the distribution.
-#*   * Neither the name of the Willow Garage nor the names of its
-#*     contributors may be used to endorse or promote products derived
-#*     from this software without specific prior written permission.
-#*
-#*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-#*  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-#*  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-#*  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-#*  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-#*  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-#*  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-#*  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-#*  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-#*  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-#*  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-#*  POSSIBILITY OF SUCH DAMAGE.
-#***********************************************************
-
-# Author: Blaise Gassend
-
-import rospy, os, sys, rospkg
+#!/usr/bin/env python3
+import rospy, os, sys, rospkg, time
+from math import sqrt
 from sound_play.msg import SoundRequest
 from geometry_msgs.msg import Twist
 from sound_play.libsoundplay import SoundClient
+
+first_sec=time.time()
+player_dic={'Moving':[first_sec, True, 0], 'Maximum speed':[first_sec, True,0]} # last call, speed was zero, playing number
 
 def sleep(t):
     try:
@@ -48,17 +15,39 @@ def sleep(t):
         pass
 
 def callback(data):
-        # print(f'Lin x: {data.linear.x}')
-        # print(f'Lin y: {data.linear.y}')
-        # print(f'Lin z: {data.linear.z}')
-        # print(f'Ang x: {data.angular.x}')
-        # print(f'Ang y: {data.angular.y}')
-        # print(f'Ang z: {data.angular.z}')
-        speeds=[data.linear.x, data.linear.y, data.linear.z]
-        for i in speeds:
-            if i>5:
-                player("Maximum_speed_achieved.ogg")
-                break
+    global player
+    speeds=[data.linear.x, data.linear.y, data.linear.z]
+    # for i in speeds:
+    i=sqrt(data.linear.x**2 + data.linear.y**2 + data.linear.z**2)
+    if i!=0:
+        print(abs(i), player_dic['Maximum speed'][1], time.time()-player_dic['Maximum speed'][0])
+        
+        if player_dic['Moving'][1] and (time.time()-player_dic['Moving'][0]>5):
+            if player_dic['Moving'][2]<3:
+                if player_dic['Moving'][2]==0:
+                    player("Moving.ogg")
+                if player_dic['Moving'][2]==1:
+                    player("Rolling_out.ogg")
+                if player_dic['Moving'][2]==2:
+                    player("Engaging.ogg")
+                player_dic['Moving'][2]+=1
+            else:
+                player_dic['Moving'][2]=0
+                player("Moving.ogg")
+            
+            player_dic['Moving'][0]=time.time()
+            # break
+        if abs(i)>=3 and player_dic['Maximum speed'][1] and (time.time()-player_dic['Maximum speed'][0]>5):
+            player("Maximum_speed_achieved.ogg")
+
+            player_dic['Maximum speed'][0]=time.time()
+            # break
+        player_dic['Moving'][2]=False
+        player_dic['Maximum speed'][2]=False
+
+    else:
+        player_dic['Moving'][2]=True
+        player_dic['Maximum speed'][2]=True
 
 def player(melody_name):
     global to_files, soundhandle
@@ -74,6 +63,7 @@ if __name__ == '__main__':
     soundhandle = SoundClient()
 
     rospy.sleep(1)
+    # print(rospy.Time.now())
 
     soundhandle.stopAll()
     global to_files

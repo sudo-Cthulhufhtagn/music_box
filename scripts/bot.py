@@ -1,11 +1,13 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import rospy, os, sys, rospkg, telebot, signal
 from sound_play.msg import SoundRequest
 from geometry_msgs.msg import Twist
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup
-bot = telebot.TeleBot('1763023661:AAHtQBxpg0QGWIN-a4G67IhRY9Yx5intVz8')
+bot = telebot.TeleBot('')
 
 from sound_play.libsoundplay import SoundClient
+speed_mult=1
+ang_speed_mult=1
 
 def sleep(t):
     try:
@@ -16,6 +18,8 @@ def sleep(t):
 def gen_markup():
     markup = ReplyKeyboardMarkup()
     markup.row_width = 3
+    markup.add(InlineKeyboardButton("↪️"),
+    InlineKeyboardButton("↩️"))
     markup.add(InlineKeyboardButton("↖️", callback_data="tl"),
     InlineKeyboardButton("⬆️", callback_data="tt"),
     InlineKeyboardButton("↗️", callback_data="tr"),row_width=3)
@@ -30,9 +34,11 @@ def gen_markup():
 def gen_markup2():
     markup = ReplyKeyboardMarkup()
     markup.row_width = 3
-    markup.add(InlineKeyboardButton("↪️"),
+    markup.add(InlineKeyboardButton("speed-10%"),
     InlineKeyboardButton("⏺"),
-    InlineKeyboardButton("↩️"))
+    InlineKeyboardButton("speed+10%"))
+    markup.add(InlineKeyboardButton("ang speed-10%"),
+    InlineKeyboardButton("ang speed+10%"))
     return markup
 
 def gen_markup1():
@@ -93,16 +99,18 @@ def callback_query(call):
 
 @bot.message_handler(commands=['start', 'help'])
 def send_welcome(message):
-    bot.reply_to(message, f'Я бот. Приятно познакомиться, {message.from_user.first_name}')
+    bot.reply_to(message, f'I am remote controller for robotont. Welcome {message.from_user.first_name}!')
 
 def timer_callback(event):
 	global last_heartbeat
-	if (rospy.get_time() - last_heartbeat) >= 1:
+	if (rospy.get_time() - last_heartbeat) >= 0.5:
 		cmd_vel_pub.publish(Twist())
 
 @bot.message_handler(content_types=['text'])
 def get_text_messages(message):
     twist_msg = Twist()
+    global ang_speed_mult, speed_mult, last_heartbeat
+    last_heartbeat = rospy.get_time()
     if message.text.lower() == 'привет':
         bot.send_message(message.from_user.id, 'Привет!')
     elif message.text.lower() == 'cl':
@@ -130,61 +138,77 @@ def get_text_messages(message):
         # bot.send_message(message.chat.id, 'Привет!', reply_markup=keyboard)
     elif message.text.lower() == '↖️':
         bot.delete_message(message.chat.id, message.message_id)
-        twist_msg.linear.x=1
-        twist_msg.linear.y=1
+        twist_msg.linear.x=1*speed_mult
+        twist_msg.linear.y=1*speed_mult
         cmd_vel_pub.publish(twist_msg)
         # bot.answer_callback_query(call.id, "tl")
     elif message.text.lower() ==  "⬆️":
         bot.delete_message(message.chat.id, message.message_id)
-        twist_msg.linear.x=1
-        twist_msg.linear.y=0
+        twist_msg.linear.x=1*speed_mult
+        twist_msg.linear.y=0*speed_mult
         cmd_vel_pub.publish(twist_msg)
         # bot.answer_callback_query(call.id, "tt") ↖️
-    elif message.text.lower() ==  "↗️":
+    elif message.text ==  "↗️":
         bot.delete_message(message.chat.id, message.message_id)
-        twist_msg.linear.x=1
-        twist_msg.linear.y=-1
+        twist_msg.linear.x=1*speed_mult
+        twist_msg.linear.y=-1*speed_mult
         cmd_vel_pub.publish(twist_msg)
-    elif message.text.lower() ==  "⬅️":
+    elif message.text ==  "⬅️":
         bot.delete_message(message.chat.id, message.message_id)
-        twist_msg.linear.y=1
+        twist_msg.linear.y=1*speed_mult
         cmd_vel_pub.publish(twist_msg)
-    elif message.text.lower() ==  "⏹": 
+    elif message.text ==  "⏹": 
         bot.delete_message(message.chat.id, message.message_id)
         bot.send_message(message.chat.id, "Turn left/right", reply_markup=gen_markup2())
-        twist_msg.linear.y=0
-        twist_msg.linear.x=0
+        twist_msg.linear.y=0*speed_mult
+        twist_msg.linear.x=0*speed_mult
         cmd_vel_pub.publish(twist_msg)
-    elif message.text.lower() ==  "➡️":
+    elif message.text ==  "➡️":
         bot.delete_message(message.chat.id, message.message_id)
-        twist_msg.linear.y=-1
-        twist_msg.linear.x=0
+        twist_msg.linear.y=-1*speed_mult
+        twist_msg.linear.x=0*speed_mult
         cmd_vel_pub.publish(twist_msg)
-    elif message.text.lower() ==  "↙️":
+    elif message.text ==  "↙️":
         bot.delete_message(message.chat.id, message.message_id)
-        twist_msg.linear.y=1
-        twist_msg.linear.x=-1
+        twist_msg.linear.y=1*speed_mult
+        twist_msg.linear.x=-1*speed_mult
         cmd_vel_pub.publish(twist_msg)
-    elif message.text.lower() == "⬇️":
+    elif message.text == "⬇️":
         bot.delete_message(message.chat.id, message.message_id)
-        twist_msg.linear.y=0
-        twist_msg.linear.x=-1
+        twist_msg.linear.y=0*speed_mult
+        twist_msg.linear.x=-1*speed_mult
         cmd_vel_pub.publish(twist_msg)
-    elif message.text.lower() == "↘️":
+    elif message.text == "↘️":
         bot.delete_message(message.chat.id, message.message_id)
-        twist_msg.linear.y=-1
-        twist_msg.linear.x=-1
+        twist_msg.linear.y=-1*speed_mult
+        twist_msg.linear.x=-1*speed_mult
         cmd_vel_pub.publish(twist_msg)
-    elif message.text.lower() == "↪️":
+    elif message.text == "↪️":
         bot.delete_message(message.chat.id, message.message_id)
-        twist_msg.angular.z=1
+        twist_msg.angular.z=1*ang_speed_mult
         cmd_vel_pub.publish(twist_msg)
-    elif message.text.lower() == "↩️":
+    elif message.text == "↩️":
         bot.delete_message(message.chat.id, message.message_id)
-        twist_msg.angular.z=-1
+        twist_msg.angular.z=-1*ang_speed_mult
         cmd_vel_pub.publish(twist_msg)
+    elif message.text == "ang speed+10%":
+        bot.delete_message(message.chat.id, message.message_id)
+        ang_speed_mult= ang_speed_mult*1.1 if ang_speed_mult*1.1<1.57 else 1.57
+        bot.send_message(message.chat.id, f"Ang speed: {ang_speed_mult}")
+    elif message.text == "ang speed-10%":
+        bot.delete_message(message.chat.id, message.message_id)
+        ang_speed_mult*=0.9
+    elif message.text == "speed+10%":
+        bot.delete_message(message.chat.id, message.message_id)
+        speed_mult= speed_mult*1.1 if speed_mult*1.1<3 else 3
+        bot.send_message(message.chat.id, f"Speed: {speed_mult}")
+    elif message.text == "speed-10%":
+        bot.delete_message(message.chat.id, message.message_id)
+        speed_mult*=0.9
+    elif message.text == "kys":
+        signal_handler()
     else:
-        bot.send_message(message.from_user.id, 'Не понимаю, что это значит.')
+        bot.send_message(message.from_user.id, 'Command not recognized')
         soundhandle.playWave(to_files + "/audio/Area_denied.ogg")
         sleep(2)
 
@@ -208,8 +232,8 @@ if __name__ == '__main__':
     to_files=rospack.get_path('music_box')
 
 
-    rospy.loginfo('Attempt 1')
-    soundhandle.playWave(to_files + "/audio/Rolling_out.ogg")
-    sleep(2)
+    # rospy.loginfo('Attempt 1')
+    # soundhandle.playWave(to_files + "/audio/Rolling_out.ogg")
+    # sleep(2)
     bot.polling()
 

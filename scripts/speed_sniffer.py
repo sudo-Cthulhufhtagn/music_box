@@ -37,9 +37,8 @@ def callback(data):
             
             player_dic['Moving'][0]=time.time()
             # break
-        if abs(i)>=3 and player_dic['Maximum speed'][1] and (time.time()-player_dic['Maximum speed'][0]>5):
+        if i>=3 and player_dic['Maximum speed'][1] and (time.time()-player_dic['Maximum speed'][0]>5):
             player("Maximum_speed_achieved.ogg")
-
             player_dic['Maximum speed'][0]=time.time()
             # break
         player_dic['Moving'][2]=False
